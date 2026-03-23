@@ -10,22 +10,38 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Build connection string for Azure PostgreSQL with AAD
+const buildConnectionString = () => {
+  const host = process.env.DB_HOST;
+  const port = process.env.DB_PORT || 5432;
+  const database = process.env.DB_NAME || 'postgres';
+  const user = process.env.DB_USER;
+  const password = process.env.DB_PASSWORD;
+  
+  // If using Azure AD, the password might be an access token
+  // For regular connection, use password directly
+  return {
+    host,
+    port: parseInt(port),
+    database,
+    user,
+    password,
+    ssl: {
+      rejectUnauthorized: false
+    },
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  };
+};
+
 // PostgreSQL connection pool
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'messageboard',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+const pool = new Pool(buildConnectionString());
 
 // Test database connection
 pool.query('SELECT NOW()')
   .then(() => console.log('Connected to PostgreSQL database'))
-  .catch((err) => console.error('Database connection error:', err));
+  .catch((err) => console.error('Database connection error:', err.message));
 
 // Create messages table if it doesn't exist
 const createTableQuery = `
@@ -39,7 +55,7 @@ const createTableQuery = `
 
 pool.query(createTableQuery)
   .then(() => console.log('Messages table ready'))
-  .catch((err) => console.error('Error creating table:', err));
+  .catch((err) => console.error('Error creating table:', err.message));
 
 // GET /messages - Return all messages
 app.get('/messages', async (req, res) => {
