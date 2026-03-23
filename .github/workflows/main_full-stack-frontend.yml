@@ -60,6 +60,6 @@ jobs:
         with:
           inlineScript: |
             az storage blob upload-batch \
+              --destination '$web' \
               --source . \
-              --destination-container-name '$web' \
               --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}"
