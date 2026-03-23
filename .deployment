@@ -1,0 +1,6 @@
+[config]
+command = bash install_and_build.sh
+script = 
+
+[install]
+command = cd backend && npm install
