@@ -39,7 +39,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write
       contents: read
 
     steps:
@@ -48,18 +47,14 @@ jobs:
         with:
           name: frontend-build
 
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_C2D1D9E316794100BEE67AD3226F28AE }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_68AA55E95AB14F3AB5D93B5E864676C1 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_CC041EB896B148FF9B0F4564DA35103A }}
-
       - name: Azure Blob Storage upload
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            az storage blob upload-batch \
-              --destination '$web' \
-              --source . \
-              --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}"
+        run: |
+          echo "Installing Azure CLI..."
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          
+          echo "Uploading files to Azure Storage..."
+          az storage blob upload-batch \
+            --destination '$web' \
+            --source . \
+            --connection-string "${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}"
+        shell: bash
